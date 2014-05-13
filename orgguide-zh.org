@@ -1,0 +1,829 @@
+#+STARTUP: content
+#+OPTIONS:_^:{}
+#+TITLE:the compact Org-mode guide
+
+_Release 7.9.2_by Carsten Dominik_
+
+译者注: 最近在学习Org mode的使用, 看到这方面的教程很多都是英文版的,身
+为中国人, 怎么办呢, 为了Emacs的普及和Org的普及, 我就献出点自己
+的青春做个翻译吧, 正好借机复习下Emacs, 每次学习自己都会有新的收获, 看
+到这个简单的Org入门指南是本很不错的教程, 也没找见网上有完整的译文, 就
+从这篇教程开始翻译吧. ^_^.
+- 版权声明
+
+  Copyright (C) 2010-2012 Free Software Foundation
+
+    Permission is granted to copy, distribute and/or modify this document under
+  the terms of the GNU Free Documentation License, Version 1.3 or any later
+  version published by the Free Software Foundation; with no Invariant Sections,
+  with the Front-Cover texts being “A GNU Manual,” and with the Back-Cover
+  Texts as in (a) below. A copy of the license is included in the section entitled
+ “GNU Free Documentation License.”
+  (a) The FSF’s Back-Cover Text is: “You have the freedom to copy and modify
+  this GNU manual. Buying copies from the FSF supports it in developing GNU
+  and promoting software freedom.”
+  This document is part of a collection distributed under the GNU Free Documentation
+  License. If you want to distribute this document separately from the
+  collection, you can do so by adding a copy of the license to the document, as
+  described in section 6 of the license.
+
+*目录*
+
+* DONE 简介(Instruction)
+  CLOSED: [2012-11-20 周二 13:48]
+** 引言(Preface)
+
+   Org可以用来记笔记, 维护日常工作安排, 在纯文本下快速有效的做项目计划.同
+时它也是一个编辑发布工具
+
+   /本文章是从《Org-Mode Manual》一书衍生而来, 是对《Org-Mode Manual》
+知识点的一个浓缩/ 
+
+** 安装(Installation)
+
+*注意* /如果你正在使用Emacs中已经集成好的Org版本的话, 请跳到下一节./
+
+  如果你已经从网上下载好了Org的zip格式或是tar格式文件, 亦或是git仓库.
+你需要做的就是添加lisp子目录到Emacs的load-path中去, 达到这个目的, 你需
+要添加下面几行代码到 /.emacs/ 文件中去
+#+begin_src lisp
+(setq load-path (cons "~/path/to/orgdir/lisp" load-path))
+(setq load-path (cons "~/path/to/orgdir/contrib/lisp" load-path))
+#+end_src
+为了能有更快的运行速度, 你也可以编译Lisp文件
+#+begin_src lisp
+make
+#+end_src
+然后添加下面的代码到你的.emacs文件中去, 这样就可以在Org-mode启动的时候
+自动载入所有的org的功能
+#+begin_src lisp
+(require 'org-install)
+#+end_src
+
+** 激活(Activation)
+
+添加以下几行内容到你的.emacs文件中, 最后三行是对快捷键的定义, 你也可以
+用适合自己的方式定义它们.
+#+begin_src lisp
+;; The following lines are always needed. Choose your own keys.
+(add-to-list 'auto-mode-alist '("\\.org\\'" . org-mode)) ; not needed since Emacs 22.2
+(add-hook 'org-mode-hook 'turn-on-font-lock) ; not needed when global-font-lock-mode is on
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-set-key "\C-cb" 'org-iswitchb)
+#+end_src
+当做完以上的设置工作后, 所有的.org文件都将会转到org-mode模式下进行编辑.
+
+** 反馈(Feedback)
+
+如果您发现Org有不足的地方, 或是您有一些想要咨询的问题, 更或是您对我们
+评价和您对org的意见想法, 您都可以把它们以邮件的方式发送给我们, 我们的
+邮箱是:emacs-orgmode@gnu.org, 想要查看如何提交错误报告,请参见org指南.
+
+* DONE 文档结构(Document Structure)
+  CLOSED: [2012-11-20 周二 17:30]
+
+Org是建立在大纲视图的基础之上的, 它提供了很多灵活的命令来对文档的结构
+进行编辑
+
+** 大纲(Outlines)
+
+Org是在大纲模式之上实现的, 大纲可以将文档在不同的层次结构上加以组织,
+这是对笔记和想法的最好的一种表示方式(至少对于作者来说是这样). 这种结构
+的一个概念就是:折叠文档中的大部分内容, 仅仅显示大体的文档结构和当前正
+在编辑的部分内容.Org通过把显示/隐藏功能集中在一个命令上, 大大的简化了
+大纲的使用, 这个命令叫org-cycle, 被绑定在TAB键上.
+
+** 标题(Headlines)
+
+标题明确了大纲树的结构, 在Org中, 标题以一个或是多个星号(*)开头, 与标题
+内容间有一个空格. 比如:
+#+begin_src lisp
+ * 一级标题
+ ** 二级标题
+ *** 三级标题
+   正文
+ *** 三级标题
+   正文
+
+ * 又一个一级标题
+#+end_src
+一些有认为太多的星号显得太乱了, 他们更喜欢每个标题只用一个星号开始, 前
+面换成空白, 这些内容的设置将在15.2节中介绍.
+
+** 可见度循环(Visibility cycling)
+
+大纲可以在文档中实现部分内容的隐藏, Org使用两个命令, 分别绑定在 *TAB*
+和 *S-TAB* 上, 用它们可以在不同的可见范围下循环.
+
+*TAB* 
+
+  子树循环: 将当前子树在下面的循环中转换
+
+  -> FOLDED -> CHILDREN -> SUBTREE .
+
+*S-TAB* 和 *C-u TAB*
+
+  全局树循环:把所有内容在下面的循环中转换
+
+  -> OVERVIEW -> CONTENTS -> SHOW ALL .
+
+*C-u C-u C-u TAB*
+  显示所有内容
+
+Emacs第一次访问Org文件的时候, 全局状态默认是OVERVIEW, 也就是说仅显示最
+高层标题, 这个可以通过org-startup-folded命令进行设置, 也可以在每一个
+org文件的内容中添加以下关键字: *overview*, *content*, *showall*.像下面
+这样
+#+begin_src org
+ #+STARTUP: content
+#+end_src
+** 移动(Motion)
+
+下面的快捷键可以在不同的标题间移动光标.
+|---------+----------------|
+| 快捷键  | 描述           |
+|---------+----------------|
+| C-c C-n | 下一个标题     |
+| C-c C-p | 上一个标题     |
+| C-c C-f | 下一个同级标题 |
+| C-c C-b | 上一个同级标题 |
+| C-c C-u | 回到父标题     |
+|---------+----------------|
+
+** 结构编辑(Structure editing)
+
+|----------------+-----------------------------------------------------------------|
+| 快捷键         | 描述                                                            |
+|----------------+-----------------------------------------------------------------|
+| M-RET          | 插入新的同级标题                                                |
+| M-S-RET        | 插入新的TODO同级标题                                            |
+| TAB            | 在标题还没有命名时使用, 可以转换标题的级别                      |
+| M-LEFT/RIGHT   | 将当前标题升/降一级                                             |
+| M-S-LEFT/RIGHT | 将当前子树中所有标题升/降一级                                   |
+| M-S-UP/DOWN    | 将当前子树向上/下移动位置                                       |
+| C-c C-w        | Refile entry or region to a different location, See Section 9.2 |
+| C-x n s/w      | 仅显示当前标题下内容(Subtree), 或是全部显示(Widen)              |
+|----------------+-----------------------------------------------------------------|
+
+** 稀疏树(Spare trees)
+
+/(译者注:Spare tree, 刚看到这个概念, 很模糊, 但实现上它更像是一个筛选
+器, 筛选出符合我们输入的关键的内容并显示出来, 在org下, 试一下`C-c /'也
+许你就什么都明白了)/
+
+Org的一个重要的功能就是能够为大纲树中被选中的信息建立 /稀疏树/ , 这样
+一来整个文档就可以尽可能的折叠起来, 但是被选中的信息是以标题的形式显示
+的, 只要试一下你就会立刻知道它是怎么工作的了.
+
+  Org模式包含了一些用来创建树的命令, 所有的这些命令都可以通过一个调试
+  来访问.
+
+|---------+----------------------------------|
+| 快捷键  | 描述                             |
+|---------+----------------------------------|
+| C-c /   | 输入一个关键字来创建稀疏树       |
+| C-c / r | 输入一个正则式来创建匹配的稀疏树 |
+|---------+----------------------------------|
+  另外还有一些用于创建稀疏树的关键字, 比如TODO, tags, properties等将在
+后面的章节讨论.
+
+** 简单的列表(Plain lists)
+
+在大纲模式下, 手动格式化的列表可以提供额外的组织结构, 同时也可以提供一
+个创建复选框列表的方法(参见5.6节[Checkbox]), Org可以编辑这样的列表, 以
+及导出到HTML中去(参见12章[导出]).
+
+Org可以分辨出有序列表, 无序列表以及描述列表
+- 无序列表以'-', '+', 或是'*'开始.
+- 有序列表以'1.'或是'1)'开始
+- 描述列表使用'::'来分离描述部分和正文
+同一个列表的不同Item(条目), 必须在首行拥有相同的缩进. 一个Item会在下一
+个和它具有相同缩进或是更少缩进的地方结束. 一个列表会在所有的Item都结束
+, 或是有两个空行时结束. 举例来说:
+#+begin_src org
+ ** Lord of the Rings
+    My favorite scenes are (in this order)
+    1. The attack of the Rohirrim
+    2. Eowyn's fight with the witch king
+       + this was already my favorite scene in the book
+       + I really like Miranda Otto.
+    Important actors in this film are:
+    - Elijah Wood :: He plays Frodo
+    - Sean Austin :: He plays Sam, Frodo's friend.
+#+end_src
+下面这些快捷键会在光标处于这些条目上时起作用
+|----------------+---------------------------------------------------------|
+| 快捷键         | 描述                                                    |
+|----------------+---------------------------------------------------------|
+| TAB            | 可以像折叠大纲标题一个折叠Items                         |
+| M-RET          | 在当前级别下插入新的Item                                |
+| M-S-RET        | 插入一个新的带有复选框的Item                            |
+| M-S-UP/DOWN    | 上下移动Item包括它的子项                                |
+| M-LEFT/RIGHT   | 将当前Item升/降一个级别, 不包括它的子项                 |
+| M-S-LEFT/RIGHT | 将当前Item升/降一个级别, 包括它的子项                   |
+| C-c C-c        | 如果Item中有复选框, 该命令可以切换复选框的状态          |
+| C-c -          | 转换当前级别下Item的前缀项, 包括('-','+','*','1.', '1)' |
+|----------------+---------------------------------------------------------|
+/(译者注:`C-c -' 的功能, 也可以使用S-LEFT/RIGHT实现)/
+
+** 脚注
+
+一个脚注在段落中定义, 是在一对方括号中, 由一个脚注标记和一个以0递增的
+数字组成. 脚注的引用部分只是简单的在脚注定义的基础上, 在后面加上文字描
+述, 比如:
+#+begin_src org 
+The Org homepage[fn:1] now looks a lot better than it used to.
+...
+[fn:1] The link is: http://orgmode.org
+#+end_src
+下面的快捷键可以对脚注进行操作:
+|-----------+-------------------------------------------------------------|
+| 快捷键    | 描述                                                        |
+|-----------+-------------------------------------------------------------|
+| C-c C-c   | 在定义和引用之间跳转                                        |
+| C-c C-x f | 和上一个命令的区别: 在还没有创建引用的情况下,会提示创建引用 |
+|-----------+-------------------------------------------------------------|
+/更多内容阅读参见外部链接:/ [[http://orgmode.org/manual/Document-Structure.html#Document-Structure][Org指南第二章]], [[http://sachachua.com/blog/2008/01/outlining-your-notes-with-org/][Sacha Chua's tutorial]]
+
+* DONE 表格(Tables)
+  CLOSED: [2012-11-20 周二 20:28]
+
+  Org自带了一个快速直观的Table Editor(表编辑器), 它的表格计算能力与
+Emacs的calc包结合在一起(更多信息请参阅Emacs Calculator manual)
+
+Org让纯ASCII环境下, 规范化表格变得简单. 任何一个以'|'做为第一个非空字
+符一内容, 都会被认为是表的一部分. 同样'|'也是列的分隔符. 一个表格看起
+来像下面这样:
+#+begin_src org
+ | Name  | Phone | Age |
+ |-------+-------+-----|
+ | Peter |  1234 |  17 |
+ | Anna  |  4321 |  25 |
+#+end_src
+当在你在表格中按下TAB键, 或RET键, 或是C-c C-c组合键时, 表格会自动重新
+调整(re-align). TAB键同时会让光标移动到下一个单元格, RET键会使光标移动
+到当前列的下一行, 表格依据第一行进行缩进. 任何一行以'|-'开头, 都被认为
+是一条水平分割线, 并且会在下一次重新调整(re-align)时自动补全, 所以想创
+建上面的表, 你只需要输入以下内容:
+#+begin_src org
+ |Name|Phone|Age|
+ |-
+#+end_src
+然后按下TAB键, 这时就可以编辑表格的内容了. 当输入完
+#+begin_src org
+ |Name|Phone|Age
+#+end_src
+之后直接按下C-c RET, 可以更快的达到上述的效果.
+
+当在单元格中进行编辑的时候, Org会以特殊的方式处理DEL, BACKSPACE以及其
+它所有的字符按键, 这样在一个单元格内进行插入和删除操作时, 就不会转移到
+其它的单元格内去. 同样, 当直接在光标后输入内容并按下TAB或是RET或是
+S-TAB后, Org会自动创建一个新的空白单元格.
+
+*创建和转换*
+
+C-c | :提示输入 列x行, 创建一个大小为列x行的表格, 或将当前表格改为列x
+行大小.
+
+*重新排列和光标在单元格间移动*
+
+|---------+--------------------------|
+| 快捷键  | 描述                     |
+|---------+--------------------------|
+| C-c C-c | 重新排列当前表格         |
+| TAB     | 移动光标到下一单元格     |
+| S-TAB   | 移动光标到上一单元格     |
+| RET     | 移动光标到当前列的下一行 |
+|---------+--------------------------|
+
+*行列编辑*
+
+|--------------+---------------------------------------------|
+| 快捷键       | 描述                                        |
+|--------------+---------------------------------------------|
+| M-LEFT/RIGHT | 将当前列左移/右移                           |
+| M-S-LEFT     | 删除当前列                                  |
+| M-S-RIGHT    | 在光标左边新建一列                          |
+| M-UP/DOWN    | 将当前行上移/下移                           |
+| M-S-UP       | 删除当前行                                  |
+| M-S-DOWN     | 在光标上边新建一行                          |
+| C-c -        | 在光标下方插入水平分割线                    |
+| C-c RET      | 在光标下方插入水平分割线,同时移动光标到下方 |
+| C-c ^        | 对表格进行排序                              |
+|--------------+---------------------------------------------|
+/更多内容参阅:/
+
+[[http://orgmode.org/manual/Tables.html#Tables][Chapter 3 of the manual]]
+
+[[http://orgmode.org/worg/org-tutorials/tables.html][Bastien's table tutorial]]
+
+[[http://orgmode.org/worg/org-tutorials/org-spreadsheet-intro.html][Bastien's spreadsheet tutorial]]
+
+[[http://orgmode.org/worg/org-tutorials/org-plot.html][Eric's plotting tutorial]]
+
+* DONE 超链接(Hyperlinks)
+  CLOSED: [2012-11-21 周三 11:15]
+  像HTML一样, Org提供在文件内容中插入内部链接和或外部链接或Usenet文章
+  或电子邮件, 或其它的内容.
+** 链接书写格式(Link format)
+   Org能够识别标准的URL, 并激活它们, 使它们可以被点击链接. Org提供的统
+   一的链接书写格式如下:
+   #+begin_src org
+   [[链接地址][描述]] 或者是没有描述内容 [[链接地址]]
+   #+end_src
+   一旦一个链接是完整的(即所有的方括号都存在), Org就会用描述中的内容来
+   代替方括号和链接地址, 如果只有链接地址, Org就会隐藏方括号而只显示链
+   接地址. 想要编辑链接部分, 只需在链接上按下C-c C-l即可.
+
+** 内部链接(Internal links)
+   (译者注:内部链接其实就是把上一节所述的链接地址写成当前文档内部的某
+   个已有标题, 其它意思不变, 不在翻译, 也可以用如下的形式)
+   #+begin_src org
+   #<<my-anchor>>
+   
+   [[my-anchor][描述部分]]
+   #+end_src
+
+** 外部链接(External links)
+   Org提供面向众多方面的链接. 外部链接更像是一个类URL的定位器, 它以一
+   个标识字符串后加一个冒号(:)开始, 中间不能有空格, 比如:
+   | http://www.astro.uva.nl/~dominik        | 网站链接                            |
+   | file:/home/dominik/images/jupiter.jpg   | 文件链接, 绝对路径                  |
+   | /home/dominik/images/jupiter.jpg        | 同上                                |
+   | file:papers/last.pdf                    | 文件链接,相对路径                   |
+   | file:projects.org                       | 另一个org文件                       |
+   | docview:papers/last.pdf::NNN            | 在doc-view mode中打开文件 的第NNN页 |
+   | id:B7423F4D-2E8A-471B-8810-C40F074717E9 | 通过ID链接到标题                    |
+   | news:comp.emacs                         | Usenet链接                          |
+   | mailto:adent@galaxy.net                 | 邮箱链接                            |
+   | vm:folder                               | VM folder link                      |
+   | vm:folder#id                            | VM message link                     |
+   | wl:folder#id                            | WANDERLUST message link             |
+   | mhe:folder#id                           | MH-E message link                   |
+   | rmail:folder#id                         | RMAIL message link                  |
+   | gnus:group#id                           | Gnus article link                   |
+   | bbdb:R.*Stallman                        | BBDB link (with regexp)             |
+   | irc:/irc.com/#emacs/bob                 | IRC link                            |
+   | info:org:External%20links               | Info node link (with encoded space) |
+   一个标准的链接应该被括在两个方括号内容, 同时也可以给链接添加一个描
+   述来代替显示链接.比如:
+   #+begin_src org
+   [[http://www.gnu.org/software/emacs/][GNU Emacs]]
+   #+end_src
+   如果链接指向一个图像文件, 且它有描述部分, 则在导出到HTML文件时, 会
+   生成一个指向该图片的链接; 如果没有描述部分, 则图像会被嵌入HTML内容
+   中去.
+
+   (译者注:如果想在Emacs中实现图文混合显示, 只需将图片链接以Org标准链
+   接的书写格式写下, 再按下C-c C-x C-v即可, 如果无法显示可能缺少相应
+   DLL文件, 可到
+
+   https://github.com/winterTTr/emacs-of-winterTTr/tree/master/.emacs.d/extra-bin/dlls
+
+   下载, 把下载好的DLL文件放入Emacs的bin文件夹即可.
+   更多相应内容参见:
+
+   http://www.16kan.com/post/217383.html#sec-1.2
+
+   http://www.cnblogs.com/holbrook/archive/2012/04/12/2444992.html#sec-2-6
+
+   http://www.cnblogs.com/qlwy/archive/2012/06/15/2551485.html#sec-3-2
+
+   http://www.haogongju.net/art/1164234
+
+   /译者注)
+
+** 处理链接(Handling links)
+Org提供了一系列方法用于创建正确的链接格式, 想要用现在的方法创建链接,
+只需如下的几个命令:
+|---------+--------------------------------------------------------------------------|
+| 快捷键  | 描述                                                                     |
+|---------+--------------------------------------------------------------------------|
+| C-c l   | 需要自己绑定此快捷键到org-store-link命令, 用于将当前位置存储链接存储起来 |
+| C-c C-l | 光标处无链接时,插入链接.有链接时,编辑当前链接                            |
+| C-c C-o | 打开链接                                                                 |
+| C-c &   | 跳回链接定义处                                                           |
+| C-c %   | 记录当前的地址,使用C-c &可以在已记录的地址中跳转                         |
+|---------+--------------------------------------------------------------------------|
+** 定向链接(Targeted links)
+   文件链接可以添加一些附加信息, 使得Emacs可以跳到文件的指定位置.这些
+   附加信息紧跟在两个冒号(::)后面, 可以是行号, 或是搜索选项.
+
+   这里有一些简单的例子:
+   #+begin_src org
+   [[file:~/code/main.c::255]] Find line 255
+   [[file:~/xx.org::My Target]] Find ‘<<My Target>>’
+   [[file:~/xx.org::#my-custom-id]] Find entry with custom id
+   #+end_src
+
+   更多内容请参阅:
+   
+   [[http://orgmode.org/manual/Hyperlinks.html#Hyperlinks][Chapter 4 of the manual]]
+
+* DONE 待办事项(TODO Items)
+  CLOSED: [2012-11-23 周五 20:40]
+  Org并不是把TODO列表当成单独的文件来维护的, 相反地, TODO 事件正是我
+  们笔记内容的一个不可分割的部分, 因为在我们编辑的时候会经常性的用到
+  TODO标记. 在Org模式下, 只要简单的在树的某个节点做一个TODO的标记,
+  我们就省去很多重复的工作, TODO事件显示的正是我们当前要做的事情.
+
+  当然, 这项技术是为了维护所有被分散在你的笔记中的TODO事件. Org为了实
+  现它, 提供了很多方法来告诉你, 你接下来要做的工作都有哪些.
+
+** 使用TODO状态(Using TODO states)
+   任何一个标题如果以'TODO'打头, 那它就会变成一个TODO item, 例如:
+   #+begin_src org
+   *** TODO Write letter to Sam Fortune
+   #+end_src
+   以下是一些TODO相关的快捷键操作.
+   |--------------+-------------------------------------------------------------|
+   | 快捷键       | 描述                                                        |
+   |--------------+-------------------------------------------------------------|
+   | C-c C-t      | 将标题在:无-TODO-DONE 之间转换                              |
+   | S-LEFT/RIGHT | 和上面所述相同, 在几种状态间转换                            |
+   | C-c / t      | 在稀疏树中查看TODO项                                        |
+   | C-c a t      | 在议程表中查看所有的TODO项(将在[[议程查看(Agenda Views)]]中介绍 |
+   | S-M RET      | 插入一个TODO项                                              |
+   |--------------+-------------------------------------------------------------|
+
+** 多种状态的工作流(Multi-state workflows)
+   当你在做一件事情的时候, 你可以使用TODO关键字来替这个事件指定不同的
+   状态, 比如:
+   #+begin_src lisp
+   (setq org-todo-keywords
+    '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED")))
+   #+end_src
+   其中'|'符号是用来分割TODO关键字(表明需要做的工作)和DONE关键字(表明
+   已经完成的工作)的, 如果你没有加上'|', 最后一个状态就是DONE. 通过上
+   述这条语句, 我们使用C-c C-t就会使得标题的状态在TODO, FEEDBACK
+   VERIFY以及DONE和DELEGATED之间相互转换了.
+
+   有时候你可能想平行的使用不同的TODE集合, 比如:你想使用最基本的
+   TODO/DONE组合, 同时你又在做一个BUG修复工作, 你还需要额外的状态来表
+   明工作的进度状态(即不是TODO, 也是不DONE的状态). 你就可以像下面这个
+   设置:
+   #+begin_src lisp
+   (setq org-todo-keywords
+    '((sequence "TODO(t)" "|" "DONE(d)")
+     (sequence "REPORT(r)" "BUG(b)" "KNOWNCAUSE(k)" "|" "FIXED(f)")
+     (sequence "|" "CANCELED(c)")))
+   #+end_src
+   所有的关键字都不一样, 这样有助于Org跟踪事件的进展, 同时这个例子也告
+   诉我们如何给某个状态定义一个快速设置的按键. 当你按下C-c C-t 来改变
+   事件的状态的时候, 就可以通过后面小括号中的字母, 快速的设置事件的状
+   态了.
+   
+   想要在单独的某个文件中使用TODO的不同状态的话, 可以在这个文件中添加
+   以下内容:
+   #+begin_src org
+   #+TODO: TODO(t) | DONE(d)
+   #+TODO: REPORT(r) BUG(b) KNOWNCAUSE(k) | FIXED(f)
+   #+TODO: | CANCELED(c)
+   #+end_src
+   当你添加了以上内容后, 把光标处在上面并按下C-c C-c, 刷新让Org知道你
+   的修改.
+
+** 进度日志(Progress logging)
+   每当你改变一个TODO事件的状态时, Org都可以自动生成一个时间戳, 你可以
+   自己配置这个功能. 更多内容将在8.4节中介绍.
+   - *完成的事件(Closing items)*
+     最基础的一项日志功能就是记录某个事件完成时的时间, 通过下面的配置:
+     #+begin_src lisp
+     (setq org-log-done 'time)
+     #+end_src
+     你也可以在文件中加入下面的的内容实现:
+     #+begin_src org
+     #+STARTUP: logdone
+     #+end_src
+     这样一来, 每次你把一个事件由TODO状态变为DONE时, 都会在DONE的后面
+     加上一个这样的时间戳:CLOSED: [timestamp]. 如果你想给一个时间戳加
+     上一段描述的文字, 你可以这样:
+     #+begin_src lisp
+     (setq org-log-done 'note)
+     #+end_src
+     同样你也可以在文件中加入以下内容实现:
+     #+begin_src org
+     #+STARTUP: lognotedone
+     #+end_src
+     如此一来, 你会被提示输入一段描述, 这段描述会被保存到当前文件的开
+     始处, 以'Closing Note'打头.
+
+   - *跟踪TODO事件状态的改变(Tracking TODO state changes)*
+     你可能很想实时的跟踪TODO事件的状态变化, 你可以使用一个简单的时间
+     戳, 或是一个带有描述内容的时间戳. 这些记录都会做为一个详细清单插
+     入到标题的后面. 如果你想把这些描述部分处理到一个Drawer中. 可以通
+     过自定义变量`org-log-into-drawer'加以实现.
+     
+     对于状态的日志记录, Org更倾向于使用单个字母键来设置. 通过在每个关
+     键字的后面的括号中添加特殊的标记符'!'(用于时间戳), 和'@'(用于备注)加
+     以实现. 比如:
+     #+begin_src org
+     #+TODO: TODO(t) WAIT(w@/!) | DONE(d!) CANCELED(c@)
+     #+end_src
+     以上定义了TODO关键字以及它的快捷键, 同样样一个事件完成了以后会加
+     上一个时间戳, 状态变为WAIT或CANCELED时, 会记录下一段备注. 同样也
+     可以使用org-todo-keys来实现.
+
+** 优先级(Priorities)
+   如果你经常使用Org, 你会积累大量的TODO事件, 那就不得不考虑它们之间的
+   优先级了. 优先级可以通过在TODO的标题中加入一个 /priority cookie/ 像
+   下面这样:
+   #+begin_src org
+   *** TODO [#A] Write letter to Sam Fortune
+   #+end_src
+   Org提供三个优先级, 分别是'A', 'B'和'C', 其中A是最高级, B是默认级, C
+   最低. 优先级仅在议程表中有用作用.
+   |-----------+----------------------|
+   | 快捷键    | 描述                 |
+   |-----------+----------------------|
+   | C-c ,     | 设置当前标题的优先级 |
+   | S-UP/DOWN | 升/降当前的优先级    |
+   |-----------+----------------------|
+
+** 分解任务(Breaking tasks down into subtasks)
+   大事化小是一个很好的处理方式, 你可以在一个TODO标题下创建一棵有详细
+   子任务说明的大纲树. 为了能够查看这个子任务的进度, 你可以在标题的任
+   务地方插入[/]或是[%]来表述.它里面的内容会在某个子标题发生变化, 或是
+   你按下C-c C-c时进行刷新, 比如:
+   #+begin_src org
+   * Organize Party [33%]
+   ** TODO Call people [1/2]
+   *** TODO Peter
+   *** DONE Sarah
+   ** TODO Buy food
+   ** DONE Talk to neighbor
+   #+end_src
+** 复选框(Checkboxes)
+   每一项列表里面的内容都可以通过前缀'[ ]'制成一个复选框, 复选框并不包
+   含在全局的TODO列表中, 所以它往往更方便将一个子任务分解成若干个步骤
+   来实现. 以下是一个复选框的例子:
+   #+begin_src org
+   * TODO Organize party [1/3]
+     - [-] call people [1/2]
+       - [ ] Peter
+       - [X] Sarah
+     - [X] order food
+     - [ ] think about what music to play
+   #+end_src
+   复选框是分层次的, 所以当一个复选框下有子复选框时, 子复选框的形为会
+   影响的父复选框的形为, 以下是复选框常用的操作:
+   |---------+-----------------------|
+   | 快捷键  | 描述                  |
+   |---------+-----------------------|
+   | C-c C-c | 勾选/不勾选当前复选框 |
+   | M-S-RET | 插入一个新的复选框    |
+   |---------+-----------------------|
+   更多内容请参阅:
+
+   http://orgmode.org/manual/TODO-Items.html#TODO-Items
+
+   http://orgmode.org/worg/org-tutorials/orgtutorial_dto.html
+
+   http://members.optusnet.com.au/~charles57/GTD/gtd_workflow.html
+
+* DONE 标签(Tags)
+  CLOSED: [2012-11-24 周六 20:04]
+  一个实现标签和上下文相关联的好方法, 就是把标签分配到每个标题上.
+  Org已经广泛的支持标签了. 每一个标题都可以包含一个标签列表, 这个列表
+  被放在标题的结尾. 标签是一个由字母, 数字, '_'和'@'组成的词, 标签必
+  须以冒号(:)开始并以冒号结束, 如":work:", 如果是一组标签的话, 就要像
+  这样":work:urgent:". 标签默认会以和标题同样的颜色加粗显示.
+** 标签继承(Tag inheritance)
+   标签同样利用了大纲树的层次结构. 如果一个标题拥有一个特定的标签, 那
+   么所有的子标题都将继承这个标签. 举例来说, 在列表中:
+   #+begin_src org
+   * Meeting with the French group :work:
+   ** Summary by Frank :boss:notes:
+   *** TODO Prepare slides for him :action:
+   #+end_src
+   最后一个标题将同时拥有work, boss, notes, action标签, 即使它没有显式
+   的标记上这些标签. 你也可以让标签被所有的标题继续, 只需在文件中添加
+   类似下面的代码:
+   #+begin_src org
+   #+FILETAGS: :Peter:Boss:Secret:
+   #+end_src
+
+** 标签设置(Setting tags)
+   标签可以很快速的加到标题的后面. 在冒号后面, 按下M-TAB会自动填充标签,
+   (译者注: Windows下, ALT-TAB被系统用来切换不同的窗口, 只能用ESC-TAB,
+   或是绑定其它的键, 不过觉得没必要, 因为tag不常用, 用到时, 按下
+   ESC-TAB是可以接受的.)
+   同样还有如下的快捷键可以对标签进行操作:
+   |---------+-------------------------------------|
+   | 快捷键  | 描述                                |
+   |---------+-------------------------------------|
+   | C-c C-q | 为当前标题输入新的标签              |
+   | C-c C-c | 当光标在标题上时, 和C-c C-q作用一样 |
+   |---------+-------------------------------------|
+   Org同时也提供另一种快速插入标签的方式, 是基于一个事先定义好的标签列
+   表, 这个标签列表包含了当前文件会用到的所有标签. 你可以通过设置变量
+   org-tag-alist 来实现, 同样你可以像如下的方式在文件中先定义好所有会
+   用到的标签:
+   #+begin_src org
+   #+TAGS: @work @home @tennisclub
+   #+TAGS: laptop car pc sailboat
+   #+end_src
+   当你给一个标题加上标签的时候, 可以使用自动补全, Org会论据这些你定义
+   好标签自动补全的. 当前, 还有更快的添加标签的方法, 这个方法允许你使
+   用一个字母来选择你要添加的标签, 为了能让这个方法正常工作, 你需要为
+   每一个标签分配一个唯一的字母做为标识. 你可以通过在.emacs设置变量
+   org-tag-alist来实现, 比如:
+   #+begin_src lisp
+   (setq org-tag-alist '(("@work" . ?w) ("@home" . ?h) ("laptop" . ?l)))
+   #+end_src
+   如果这些标签仅仅是当前的文件会用到的话, 你可以像下面这样设置:
+   #+begin_src org
+   #+TAGS: @work(w) @home(h) @tennisclub(t) laptop(l) pc(p)
+   #+end_src
+** 搜索标签(Tag searches)
+   一旦建立起一个系统的标签, 它就可以用来搜集相关的信息到一个特定的表
+   中.
+   |------------------+------------------------------------------------------------------|
+   | 快捷键           | 描述                                                             |
+   |------------------+------------------------------------------------------------------|
+   | C-c \ 或 C-c / m | 创建一棵和输入标签匹配的稀疏树, 使用C-u前缀,会忽略掉所有非TODO项 |
+   | C-c a m          | 从所有的议程文件中查找匹配的标签并创建一个全局表                 |
+   | C-c a M          | 像上条命令一样, 但是它只匹配TODO项                               |
+   |------------------+------------------------------------------------------------------|
+   以上这些命令, 都会提示你输入一个字符串做为匹配条件, 同样它也支持布
+   尔型的逻辑运算, 像'+boss+urgent-project1', 是用于匹配
+   有'boss'和'urgent'标签同时不含'project1'标签的标题. 又或者
+   像'Kathy|Sally', 用于匹配含有'Kathy'或'Sally'标签的标题. 完整的搜索
+   语法非常的丰富, 可参见:10.3.3. Matching tags and properties.
+
+   更多内容:
+
+   http://orgmode.org/manual/Tags.html#Tags
+
+   http://sachachua.com/blog/2008/01/tagging-in-org-plus-bonus-code-for-timeclocks-and-tags/
+
+* DONE 属性(Properties)
+  CLOSED: [2012-11-25 周日 13:33]
+  属性是跟这个标题相连的键值对, 它们被放在一个特殊的地方叫PROPERTIES,
+  每一个属性都在单独的一行, 用一对冒号括起来, 后面跟上它的值.
+  #+begin_src org
+  * CD collection
+  ** Classic
+  *** Goldberg Variations
+      :PROPERTIES:
+      :Title: Goldberg Variations
+      :Composer: J.S. Bach
+      :Publisher: Deutsche Grammophon
+      :NDisks: 1
+      :END:
+  #+end_src
+  你可以把属性':Xyz:'所有的可能性的取值, 设置在一个特殊的属
+  性':Xyz:_ALL',中, 这样的属性是会被继承的, 如果你在一级标题
+  处设置了这个属性, 那么所有的子标题都将拥有这个属性. 当取值的
+  范围被定义以后, 设置相应的值将会的更容易, 且更不容易打错.
+  举例来说, 收集CD, 我们可以预先定义出版商和磁盘的数量, 像这样:
+  #+begin_src org
+  * CD collection
+    :PROPERTIES:
+    :NDisks_ALL: 1 2 3 4
+    :Publisher_ALL: "Deutsche Grammophon" Philips EMI
+    :END:
+  #+end_src
+  或者你可以通过变量org-global-properties来定义, 同样你也可以在文件中
+  加入以下内容进行定义:
+  #+begin_src org
+  #+PROPERTY: NDisks_ALL 1 2 3 4
+  #+end_src
+  |-----------+-----------------------------|
+  | 快捷键    | 描述                        |
+  |-----------+-----------------------------|
+  | C-c C-x p | 设置属性,提示输入属性名和值 |
+  | C-c C-c d | 从当前标题中移除一个属性    |
+  |-----------+-----------------------------|
+  想要通过查找属性来创建一棵稀疏树, 或是表, 它的用法和用标签创建的方法
+  是一样的(see [[搜索标签(Tag searches)]])
+
+  更多内容:
+
+  http://orgmode.org/manual/Properties-and-Columns.html#Properties-and-Columns
+
+  http://orgmode.org/worg/org-tutorials/org-column-view-tutorial.html
+
+* DONE 日期和时间(Datas and Times)
+  CLOSED: [2012-11-25 周日 21:47]
+  为了协助项目计划, 可以在TODO事件上加上一个日期或时间的标注. 在Org中,
+  这种带有时间信息的字符串, 叫做时间戳(timestamp).
+  
+** 时间戳(Timestamps)
+   时间戳是一种用于表示时间和日期的格式字符串, 就好比'<2003-09-16 Tue>'
+   或'<2003-09-16 Tue 09:39>'或'<2003-09-16 Tue 12:00-12:30>'.时间戳可
+   以在任何地方出现, 包括标题或是正文. 时间戳的存在使得我们可以看议程
+   中查看特定时间的标题和内容.
+
+   - 我们做了以下区分[5/5]:
+     - [X] *简单时间戳, 事件, 约会*:
+       一个简单的时间戳只是为一个事件加上了一个时间或日期. 这就像在纸上写
+       下一次约会可事件.
+       #+begin_src org
+       * Meet Peter at the movies
+         <2006-11-01 Wed 19:15>
+       * Discussion on climate change
+         <2006-11-02 Thu 20:00-22:00>
+       #+end_src
+     - [X] *不断重复的时间戳*
+       一个时间戳可以包含一个重复条件, 用来指明这个时间不仅表示当前的
+       所给的时间, 还表示一次又一次的N天后(d)或N星期后N月后(m)或N年后
+       (y)在重复的时间, 下列这个例子表示每个Wednesday都会重复的时间:
+       #+begin_src org
+       * Pick up Sam at school
+         <2007-05-16 Wed 12:30 +1w>
+       #+end_src
+     - [X] *日记风格的sexp entries*
+       对于更复杂的日期规范, Org提供使用特殊的sexp diary entries(在
+       Emacs的calendar/diary包中实现), 举例来说:
+       #+begin_src org
+       * The nerd meeting on every 2nd Thursday of the month
+         <%%(diary-float t 4 2)>
+       #+end_src
+     - [X] *日期时间范围*
+       用'--'连接两个时间戳表示一个范围.
+       #+begin_src org
+       ** Meeting in Amsterdam
+          <2004-08-23 Mon>--<2004-08-26 Thu>
+       #+end_src
+     - [X] *不活跃的时间戳*
+       就像一个最简单的时间戳一样, 但是是用方括号而不是尖括号括起来.
+       这种时间戳在某种意思上来说是不活跃的, 因为他们不会在议程中触发
+       一个事件的出现.
+       #+begin_src org
+       * Gillian comes late for the fifth time
+         [2006-11-01 周三]
+       #+end_src
+** 创建时间戳(Creating timestamps)
+   为了能让Org识别出时间戳, 需要用特殊的格式来定义, 下列的这些命令, 都
+   是用于创建一个正确格式的时间戳:
+   |--------------+-----------------------------------------------|
+   | 快捷键       | 描述                                          |
+   |--------------+-----------------------------------------------|
+   | C-c .        | 提示输入日期时间,插入到当前位置               |
+   | C-c !        | 类似于上一条命令,但插入的是一个不活跃的时间戳 |
+   | S-LEFT/RIGHT | 改变日期,一次改变一天                         |
+   | S-UP/DOWN    | 改变当前光标所在位置的时间值                  |
+   |--------------+-----------------------------------------------|
+** 期限与安排(Deadlines and scheduling)
+  时间戳可以通过加入以下关键字来更好地帮助计划的安排.
+  - *DEADLINE* (任务截止期限)
+    | C-c C-d | 插入一个带有关键字DEADLINE的时间戳 |
+    在截止日期前, 任务会被列在议程表中. 另外, 议程表会提示接下来快要到期
+    限的任务和过期的任务. 在到期之前, 使用org-deadline-warning-days可以
+    延迟期限, 直到任务完成. 比如:
+    #+begin_src org
+    *** TODO write article about the Earth for the Guide
+        The editor in charge is [[bbdb:Ford Prefect]]
+        DEADLINE: <2004-02-29 Sun>
+    #+end_src
+  - *SCHEDULED* (任务开始日期)
+    | C-c C-s | 插入一个带有关键字SCHEDULED |
+    #+begin_src org
+    *** TODO Call Trillian for a date on New Years Eve.
+        SCHEDULED: <2004-12-25 Sat>
+    #+end_src
+  有些任务需要一遍又一遍的重复, Org使用所谓的repeater放在DEADLINE,
+  SCHEDULED, 或是一个简单的时间戳中, 来组织这样的任务. 像下面这样:
+  #+begin_src org
+  ** TODO Pay the rent
+     DEADLINE: <2005-10-01 Sat +1m>
+  #+end_src
+  其中'+1m'就是一个repeater, 表示这个任务的第一次截止日期
+  是:2005-10-01, 到期后, 第二次的截止日期变成一个月后的同一天.
+** 计时工作时间(Clocking work time)
+   |-------------+--------------------------------------------------------|
+   | 快捷键      | 描述                                                   |
+   |-------------+--------------------------------------------------------|
+   | C-c C-x C-i | 插入一个带关键字CLOCK的时间戳,计时开始时间             |
+   | C-c C-x C-o | 在计时开始处插入一个结束时间, 计时结束并显示中间时间差 |
+   | C-c C-x C-e | Update the effort estimate for the current clock task. |
+   | C-c C-x C-x | 取消计时                                               |
+   | C-c C-x C-j | 跳转到有正在计时的标题处                               |
+   | C-c C-x C-r | 插入一个包含时钟记录的动态块(如下[[clocktable]])           |
+   | C-c C-c     | 光标在上述动态块中时,更新上述的动态块                  |
+   |-------------+--------------------------------------------------------|
+#<<clocktable>>
+   #+begin_src org
+    #+BEGIN: clocktable :maxlevel 2 :scope subtree
+    Clock summary at [2012-11-25 周日 21:46]
+
+    | Headline     | Time   |
+    |--------------+--------|
+    | *Total time* | *0:00* |
+    #+END:
+   #+end_src
+* TODO Capture - Refile - Archive
+  
+* 议程查看(Agenda Views)
+
+* 标记(Markup for rich export)
+
+* 导出(Exporting)
+
+* 发布(Publishing)
+
+* 源代码下工作(Work with source code)
+
+* 更多(Miscellaneous)
